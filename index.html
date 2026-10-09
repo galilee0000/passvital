@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="robots" content="noindex">
+<title>PassVital</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B5CAD'/%3E%3Cpath d='M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one phone-width column; iOS-style grouped lists; fixed bottom action bar */
+:root{
+  --bg:#F2F2F7; --surface:#FFFFFF; --fg:#000000; --muted:#6D6D72; --placeholder:#8A8A8E;
+  --sep:#C6C6C8; --tint:#0B5CAD; --tint-fg:#FFFFFF; --ok:#34C759; --call:#1F8A3B;
+  --urgent:#D70015; --track:#E5E5EA; --bar:rgba(249,249,249,.94); --avatar:#8E8E93;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#000000; --surface:#1C1C1E; --fg:#FFFFFF; --muted:#98989F; --placeholder:#8D8D93;
+  --sep:#38383A; --tint:#4DA3FF; --tint-fg:#FFFFFF; --ok:#30D158; --call:#248A3D;
+  --urgent:#FF453A; --track:#2C2C2E; --bar:rgba(28,28,30,.94); --avatar:#636366; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font-family:var(--font);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px)}
+.wrap{max-width:430px;margin:0 auto;padding-inline:16px;padding-block:0 160px}
+.nav{display:flex;align-items:center;justify-content:space-between;height:44px;position:sticky;top:0;background:var(--bg);z-index:2}
+.nav .back{display:flex;align-items:center;gap:4px;color:var(--tint);background:none;border:0;font:inherit;font-size:17px;padding:8px 8px 8px 0;cursor:pointer;min-height:44px}
+.nav .step{color:var(--muted);font-size:15px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:17px}
+.progress{height:3px;background:var(--track);margin-inline:-16px}
+.progress i{display:block;height:100%;background:var(--tint)}
+h1{font-size:32px;font-weight:700;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;margin:6px 0 0}
+.stack{display:flex;flex-direction:column;gap:28px;padding-top:16px}
+.group{display:flex;flex-direction:column;gap:7px}
+.cap{font-size:13px;color:var(--muted);padding-inline:16px;margin:0}
+.cap.head{text-transform:uppercase;letter-spacing:.02em}
+.list{background:var(--surface);border-radius:10px;overflow:hidden}
+.cell{display:flex;align-items:center;gap:12px;min-height:48px;padding:0 16px;position:relative}
+.cell + .cell::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.cell > span{flex:0 0 118px}
+.cell.wide > span{flex:1 1 auto;padding-block:12px}
+.cell input[type=text],.cell input[type=email],.cell input[type=password],.cell input[type=tel]{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:inherit;font-size:17px;padding:12px 0;outline:none}
+.cell input::placeholder{color:var(--placeholder)}
+.cell:focus-within{box-shadow:inset 3px 0 0 var(--tint)}
+.cell .val{flex:1;min-width:0;padding-block:12px;overflow-wrap:anywhere}
+.switch{appearance:none;-webkit-appearance:none;flex:0 0 51px;width:51px;height:31px;border-radius:16px;background:var(--track);position:relative;cursor:pointer;transition:background .2s;margin:0}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:transform .2s}
+.switch:checked{background:var(--ok)}
+.switch:checked::after{transform:translateX(20px)}
+.switch:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.seg{display:flex;background:rgba(118,118,128,.14);border-radius:9px;padding:2px}
+.seg b{flex:1;text-align:center;font-size:14px;font-weight:400;padding:6px 0;border-radius:7px;color:var(--fg)}
+.seg b.on{background:var(--surface);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+.sleeve{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:10px;padding:12px 16px}
+.sleeve div{flex:1;min-width:0}
+.sleeve strong{display:block;font-weight:600}
+.sleeve small{color:var(--muted);font-size:15px}
+.photo{display:flex;flex-direction:column;align-items:center;gap:10px}
+.avatar{width:96px;height:96px;border-radius:50%;background:var(--avatar);display:grid;place-items:center;color:#fff;font-size:34px;font-weight:600;flex:none}
+.err{color:var(--urgent);font-size:15px;padding-inline:16px;margin:0}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--sep);padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));z-index:3}
+.bar .in{max-width:398px;margin:0 auto;display:flex;flex-direction:column;gap:6px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:50px;border-radius:12px;border:0;font:inherit;font-size:17px;font-weight:600;cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--tint);color:var(--tint-fg)}
+.btn.call{background:var(--call);color:#fff;min-height:56px;border-radius:14px}
+.btn.danger{background:none;color:var(--urgent);min-height:40px;font-weight:500}
+.btn.ghost{background:var(--track);color:var(--fg)}
+.btn.solid-danger{background:var(--urgent);color:#fff}
+.btn:disabled{opacity:.55;cursor:default}
+.btn:focus-visible,.back:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.urg{display:flex;align-items:center;gap:10px;padding:10px 0}
+.urg strong{color:var(--urgent);font-weight:600;flex:1}
+.urg span{color:var(--muted);font-size:15px}
+.who{display:flex;align-items:center;gap:16px}
+.who .avatar{width:72px;height:72px;font-size:28px}
+.who h1{font-size:28px}
+.confirm{display:flex;flex-direction:column;gap:8px;background:var(--surface);border-radius:10px;padding:14px 16px}
+.confirm p{margin:0;font-size:15px}
+.confirm .row{display:flex;gap:8px}
+.confirm .row .btn{min-height:44px;font-size:15px}
+.center{display:grid;place-items:center;min-height:60vh;color:var(--muted);font-size:15px;text-align:center}
+.spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--track);border-top-color:var(--tint);animation:sp 0.8s linear infinite;margin:0 auto 12px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation-duration:2s!important}}
+</style>
+</head>
+<body>
+<div id="app" class="wrap"><div class="center"><div><div class="spin"></div>Chargement de la fiche…</div></div></div>
+<script>
+(function () {
+  "use strict";
+  // ---- Configuration ----
+  var SUPABASE_URL = "https://fuproswhrlbyktxojjig.supabase.co";
+  var SUPABASE_KEY = "sb_publishable_4eBsvHm-KvdpI5tF2uigOw_CPL783oI"; // public key, safe in the page
+  var params = new URLSearchParams(location.search);
+  var CODE = (params.get("c") || "PV-7K2Q-9XA").toUpperCase();
+  if (!/^PV-[A-Z0-9]{4}-[A-Z0-9]{3}$/.test(CODE)) CODE = "PV-7K2Q-9XA";
+  var TOKEN_KEY = "passvital-token-" + CODE;
+
+  var app = document.getElementById("app");
+  var card = null;            // {data, updated_at} from the server
+  var screen = "loading";
+  var saving = false, confirmReset = false, loadError = false;
+  var form = { prenom: "", nom: "", nomPublic: "", nomPublicEdited: false, tel: "", adresse: "", cp: "", ville: "", showAdresse: false };
+  var acct = { email: "", cgu: false };
+
+  function getToken() { try { return localStorage.getItem(TOKEN_KEY); } catch (e) { return null; } }
+  function setToken(t) { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} }
+  function clearToken() { try { localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  function newToken() { var a = new Uint8Array(24); crypto.getRandomValues(a); return Array.from(a, function (b) { return b.toString(16).padStart(2, "0"); }).join(""); }
+  function isOwner() { return !!getToken(); }
+
+  function rpc(fn, body) {
+    return fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+      method: "POST",
+      headers: { "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); });
+  }
+
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function logo(color, size) { return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="' + color + '"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>'; }
+  var CHEV = '<svg width="12" height="20" viewBox="0 0 12 20" aria-hidden="true"><path d="M10 2 2 10l8 8" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var PHONE = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z"/></svg>';
+  function initials(p, n) { return ((p || "").trim().charAt(0) + (n || "").trim().charAt(0)).toUpperCase() || "?"; }
+  function autoPublic() { var p = (form.prenom || "").trim(), n = (form.nom || "").trim(); return p ? p + (n ? " " + n.charAt(0).toUpperCase() + "." : "") : ""; }
+  function frDate(iso) { try { return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }); } catch (e) { return ""; } }
+
+  function viewCompte() {
+    return '<header class="nav"><span class="brand">' + logo("var(--tint)", 26) + 'PassVital</span><span class="step">1 sur 2</span></header>' +
+      '<div class="progress"><i style="width:50%"></i></div>' +
+      '<div class="stack">' +
+        '<div><h1>Créer votre compte</h1><p class="sub">Votre compte vous permet de remplir et de modifier votre fiche d’urgence.</p></div>' +
+        '<div class="sleeve"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--tint)" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM20 14v7h-3"/></svg>' +
+          '<div><strong>Manchon détecté</strong><small>' + esc(CODE) + ' · prêt à être activé</small></div>' +
+          '<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="12" fill="var(--ok)"/><path d="m7 12.5 3.2 3.2L17 9" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+        '<div class="seg" aria-hidden="true"><b class="on">Créer un compte</b><b>Se connecter</b></div>' +
+        '<div class="group"><div class="list">' +
+          '<label class="cell" for="email"><span>E-mail</span><input id="email" type="email" autocomplete="email" placeholder="nom@exemple.fr" value="' + esc(acct.email) + '"></label>' +
+          '<label class="cell" for="pw"><span>Mot de passe</span><input id="pw" type="password" autocomplete="new-password" placeholder="Obligatoire"></label>' +
+          '<label class="cell" for="pw2"><span>Confirmation</span><input id="pw2" type="password" autocomplete="new-password" placeholder="Obligatoire"></label>' +
+        '</div><p class="cap">8 caractères minimum, dont au moins 1 chiffre.</p></div>' +
+        '<div class="group"><div class="list"><label class="cell wide" for="cgu"><span>J’accepte les conditions d’utilisation et la politique de confidentialité</span><input id="cgu" class="switch" type="checkbox" role="switch"' + (acct.cgu ? " checked" : "") + '></label></div>' +
+        '<p class="cap">Démo : l’e-mail et le mot de passe ne sont pas enregistrés.</p></div>' +
+        '<p class="err" id="err" role="alert"></p>' +
+      '</div>' +
+      '<footer class="bar"><div class="in"><button class="btn primary" id="go-ident">Créer mon compte</button></div></footer>';
+  }
+
+  function viewIdent() {
+    var pub = form.nomPublicEdited ? form.nomPublic : autoPublic();
+    return '<header class="nav"><button class="back" id="back">' + CHEV + 'Retour</button><span class="step">2 sur 2</span></header>' +
+      '<div class="progress"><i style="width:100%"></i></div>' +
+      '<div class="stack">' +
+        '<div><h1>Identité</h1><p class="sub">Ces informations permettent aux secours de vous identifier.</p></div>' +
+        '<div class="photo"><div class="avatar" id="av">' + esc(initials(form.prenom, form.nom)) + '</div></div>' +
+        '<div class="list">' +
+          '<label class="cell" for="prenom"><span>Prénom</span><input id="prenom" type="text" autocomplete="given-name" placeholder="Obligatoire" value="' + esc(form.prenom) + '"></label>' +
+          '<label class="cell" for="nom"><span>Nom</span><input id="nom" type="text" autocomplete="family-name" placeholder="Obligatoire" value="' + esc(form.nom) + '"></label>' +
+        '</div>' +
+        '<div class="group"><p class="cap head">Coordonnées</p><div class="list">' +
+          '<label class="cell" for="tel"><span>Téléphone</span><input id="tel" type="tel" autocomplete="tel" placeholder="+49 …" value="' + esc(form.tel) + '"></label>' +
+          '<label class="cell" for="adresse"><span>Adresse</span><input id="adresse" type="text" autocomplete="street-address" placeholder="Rue et numéro" value="' + esc(form.adresse) + '"></label>' +
+          '<label class="cell" for="cp"><span>Code postal</span><input id="cp" type="text" inputmode="numeric" autocomplete="postal-code" placeholder="30926" value="' + esc(form.cp) + '"></label>' +
+          '<label class="cell" for="ville"><span>Ville</span><input id="ville" type="text" autocomplete="address-level2" placeholder="Ville" value="' + esc(form.ville) + '"></label>' +
+          '<label class="cell wide" for="showAdresse"><span>Afficher mon adresse sur la fiche d’urgence</span><input id="showAdresse" class="switch" type="checkbox" role="switch"' + (form.showAdresse ? " checked" : "") + '></label>' +
+        '</div><p class="cap">Si l’interrupteur est désactivé, votre adresse n’est pas enregistrée.</p></div>' +
+        '<div class="group"><p class="cap head">Nom affiché sur la fiche</p><div class="list">' +
+          '<label class="cell" for="nomPublic"><span>Nom public</span><input id="nomPublic" type="text" placeholder="Prénom + initiale" value="' + esc(pub) + '"></label>' +
+        '</div><p class="cap">Proposé automatiquement : prénom et initiale du nom.</p></div>' +
+        '<p class="err" id="err" role="alert"></p>' +
+      '</div>' +
+      '<footer class="bar"><div class="in"><button class="btn primary" id="save"' + (saving ? " disabled" : "") + '>' + (saving ? "Enregistrement…" : "Enregistrer") + '</button></div></footer>';
+  }
+
+  function viewFiche() {
+    var s = card.data || {};
+    var addr = s.showAdresse && (s.adresse || s.cp || s.ville);
+    var owner = isOwner();
+    var html = '<header class="urg">' + logo("var(--urgent)", 28) + '<strong>Fiche d’urgence</strong><span>PassVital</span></header>' +
+      '<div class="stack" style="padding-top:8px">' +
+        '<div class="who"><div class="avatar">' + esc(initials(s.prenom, s.nom)) + '</div><div><h1>' + esc(s.nomPublic || s.prenom) + '</h1><p class="sub" style="font-size:13px;margin-top:2px">Informations déclarées par le titulaire</p></div></div>' +
+        (s.tel ? '<a class="btn call" href="tel:' + esc(String(s.tel).replace(/[^+\d]/g, "")) + '">' + PHONE + 'Appeler ' + esc(s.nomPublic || s.prenom) + '</a>' : '') +
+        '<div class="group"><p class="cap head">Coordonnées</p><div class="list">' +
+          '<div class="cell"><span>Téléphone</span><div class="val">' + (s.tel ? esc(s.tel) : '<span style="color:var(--muted)">Non renseigné</span>') + '</div></div>' +
+          (addr ? '<div class="cell"><span>Adresse</span><div class="val">' + esc(s.adresse) + (s.adresse ? "<br>" : "") + esc([s.cp, s.ville].filter(Boolean).join(" ")) + '</div></div>' : '') +
+        '</div><p class="cap">Mis à jour le ' + esc(frDate(card.updated_at)) + '. Manchon ' + esc(CODE) + '. Ces informations ne remplacent pas un avis médical.</p></div>';
+    if (owner && confirmReset) html += '<div class="confirm"><p>Effacer la fiche et revenir à l’écran « Créer votre compte » ?</p><div class="row"><button class="btn ghost" id="reset-no">Annuler</button><button class="btn solid-danger" id="reset-yes">Effacer</button></div></div>';
+    html += '<p class="err" id="err" role="alert"></p></div>';
+    if (owner) html += '<footer class="bar"><div class="in"><button class="btn primary" id="edit">Modifier mes informations</button>' + (confirmReset ? '' : '<button class="btn danger" id="reset">Réinitialiser la démo</button>') + '</div></footer>';
+    return html;
+  }
+
+  function viewError() {
+    return '<header class="nav"><span class="brand">' + logo("var(--tint)", 26) + 'PassVital</span></header>' +
+      '<div class="stack"><div><h1>Fiche indisponible</h1><p class="sub">Impossible de charger la fiche de ce manchon. Vérifiez la connexion internet puis réessayez.</p></div></div>' +
+      '<footer class="bar"><div class="in"><button class="btn primary" id="retry">Réessayer</button></div></footer>';
+  }
+
+  function render(focusId) {
+    if (screen === "error") app.innerHTML = viewError();
+    else if (screen === "compte") app.innerHTML = viewCompte();
+    else if (screen === "ident") app.innerHTML = viewIdent();
+    else if (screen === "fiche") app.innerHTML = viewFiche();
+    if (focusId) { var f = document.getElementById(focusId); if (f) f.focus(); }
+  }
+  function showErr(msg) { var e = document.getElementById("err"); if (e) e.textContent = msg; }
+  function readIdent() {
+    ["prenom", "nom", "tel", "adresse", "cp", "ville"].forEach(function (k) { var el = document.getElementById(k); if (el) form[k] = el.value.trim(); });
+    var sa = document.getElementById("showAdresse"); if (sa) form.showAdresse = sa.checked;
+    var np = document.getElementById("nomPublic");
+    if (np) { var v = np.value.trim(); form.nomPublicEdited = !!v && v !== autoPublic(); form.nomPublic = v || autoPublic(); }
+  }
+
+  function load() {
+    screen = "loading";
+    app.innerHTML = '<div class="center"><div><div class="spin"></div>Chargement de la fiche…</div></div>';
+    rpc("get_card", { p_code: CODE }).then(function (res) {
+      card = res && res.data ? res : null;
+      screen = card ? "fiche" : "compte";
+      render();
+    }).catch(function () { screen = "error"; render(); });
+  }
+
+  app.addEventListener("input", function (e) {
+    var id = e.target.id;
+    if (screen === "ident" && (id === "prenom" || id === "nom")) {
+      readIdent();
+      var av = document.getElementById("av"); if (av) av.textContent = initials(form.prenom, form.nom);
+      var np = document.getElementById("nomPublic"); if (np && !form.nomPublicEdited) np.value = autoPublic();
+    }
+    if (screen === "ident" && id === "nomPublic") form.nomPublicEdited = true;
+    if (screen === "compte" && id === "email") acct.email = e.target.value;
+  });
+  app.addEventListener("change", function (e) { if (e.target.id === "cgu") acct.cgu = e.target.checked; });
+
+  app.addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    if (b.id === "retry") load();
+    else if (b.id === "go-ident") {
+      var em = document.getElementById("email").value.trim(), p1 = document.getElementById("pw").value, p2 = document.getElementById("pw2").value;
+      acct.email = em; acct.cgu = document.getElementById("cgu").checked;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return showErr("Saisissez une adresse e-mail valide.");
+      if (p1.length < 8 || !/\d/.test(p1)) return showErr("Le mot de passe doit contenir au moins 8 caractères, dont 1 chiffre.");
+      if (p1 !== p2) return showErr("Les deux mots de passe ne sont pas identiques.");
+      if (!acct.cgu) return showErr("Acceptez les conditions d’utilisation pour continuer.");
+      screen = "ident"; render("prenom"); window.scrollTo(0, 0);
+    } else if (b.id === "back") {
+      readIdent(); screen = card ? "fiche" : "compte"; render(); window.scrollTo(0, 0);
+    } else if (b.id === "save") {
+      readIdent();
+      if (!form.prenom || !form.nom) return showErr("Renseignez votre prénom et votre nom.");
+      if (!form.tel || form.tel.replace(/\D/g, "").length < 6) return showErr("Renseignez un numéro de téléphone valide.");
+      save();
+    } else if (b.id === "edit") {
+      form = Object.assign({}, card.data); screen = "ident"; render("prenom"); window.scrollTo(0, 0);
+    } else if (b.id === "reset") { confirmReset = true; render(); }
+    else if (b.id === "reset-no") { confirmReset = false; render(); }
+    else if (b.id === "reset-yes") {
+      rpc("reset_card", { p_code: CODE, p_token: getToken() || "" }).then(function (ok) {
+        if (!ok) return showErr("La fiche n’a pas pu être effacée depuis ce téléphone.");
+        clearToken(); card = null; confirmReset = false; screen = "compte"; render(); window.scrollTo(0, 0);
+      }).catch(function () { showErr("Connexion impossible. Réessayez."); });
+    }
+  });
+
+  function save() {
+    var data = {
+      prenom: form.prenom, nom: form.nom, nomPublic: form.nomPublic || autoPublic(), nomPublicEdited: !!form.nomPublicEdited,
+      tel: form.tel, showAdresse: !!form.showAdresse,
+      adresse: form.showAdresse ? form.adresse : "", cp: form.showAdresse ? form.cp : "", ville: form.showAdresse ? form.ville : ""
+    };
+    var token = getToken() || newToken();
+    saving = true; render();
+    rpc("save_card", { p_code: CODE, p_token: token, p_data: data }).then(function (ok) {
+      saving = false;
+      if (!ok) { render(); return showErr("Ce manchon est déjà activé depuis un autre téléphone. Seul ce téléphone peut modifier la fiche."); }
+      setToken(token);
+      card = { data: data, updated_at: new Date().toISOString() };
+      screen = "fiche"; render(); window.scrollTo(0, 0);
+    }).catch(function () { saving = false; render(); showErr("L’enregistrement a échoué. Vérifiez la connexion internet et réessayez."); });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
