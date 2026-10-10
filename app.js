@@ -86,7 +86,8 @@
     if (/already registered|already exists/i.test(m)) return "Un compte existe déjà avec cet e-mail. Connectez-vous.";
     if (/sleeve_taken/.test(m)) return "Ce manchon est déjà associé à un autre compte.";
     if (/Password should be/i.test(m)) return "Le mot de passe est trop faible.";
-    if (/rate limit/i.test(m)) return "Trop de tentatives. Réessayez dans quelques minutes.";
+    if (/email rate limit|over_email_send_rate_limit/i.test(m + " " + (e && e.code))) return "Limite d’envoi d’e-mails atteinte (service Supabase gratuit : quelques e-mails par heure). Réessayez plus tard ou désactivez « Confirm email » dans Supabase.";
+    if (/rate limit|over_request_rate_limit/i.test(m + " " + (e && e.code))) return "Trop de tentatives depuis cet appareil. Réessayez dans quelques minutes.";
     if (/Failed to fetch|NetworkError/i.test(m)) return "Connexion impossible. Vérifiez internet et réessayez.";
     return "Une erreur est survenue. " + m;
   }
