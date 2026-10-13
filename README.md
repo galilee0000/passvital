@@ -13,6 +13,7 @@ Design : fichier Figma « PassVital – Medical Profile » (option A, bleu médi
 ## Fichiers
 - `index.html`, `app.css`, `app.js` : l’application (GitHub Pages).
 - `supabase.sql` : base de données (à exécuter une fois dans Supabase › SQL Editor).
+- `supabase-support.sql` : demandes au support envoyées par l’assistant « Besoin d’aide ? » (à exécuter une fois).
 
 ## Base de données (Supabase)
 - `profiles` : une ligne par fiche, toutes les réponses en colonnes.
@@ -20,3 +21,4 @@ Design : fichier Figma « PassVital – Medical Profile » (option A, bleu médi
 - `media` : photos, documents, vidéos (fichiers dans le bucket `passvital-media`).
 - `consent_log` : preuves de consentement (CGU et publication).
 - Vue `admin_overview` : tout en une seule table, avec l’e-mail du compte.
+- `support_requests` : demandes au support (n° S-XXXXXX, e-mail, sujet, manchon, message). Colonne `status` : `nouveau`, `en_cours`, `resolu` ; `note_interne` pour vos notes.

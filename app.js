@@ -291,7 +291,7 @@
   function vCard(c, mode) {
     var h = "";
     if (mode === "preview") h += '<header class="nav"><button class="back" data-act="close-preview">' + I.chev + 'Retour</button><span class="step">Aperçu</span></header>';
-    h += '<header class="urg">' + logo("var(--urgent)", 28) + "<strong>Fiche d’urgence</strong><span>PassVital</span></header>" +
+    h += '<header class="urg">' + logo("var(--tint)", 28) + "<strong>Fiche d’urgence</strong><span>PassVital</span></header>" +
       '<div class="stack" style="padding-top:8px"><div class="who">' + avatarHtml(c.photo_path, c.initiales) + "<div><h1>" + esc(c.nom_public || "") + '</h1><p class="sub" style="font-size:13px;margin-top:2px">Informations déclarées par le titulaire</p></div></div>';
     if (c.contact_tel) {
       h += '<div class="group"><a class="btn call" href="tel:' + esc(String(c.contact_tel).replace(/[^+\d]/g, "")) + '">' + I.phone + "Appeler " + esc(c.contact_nom || "le contact d’urgence") + "</a>" +
@@ -302,10 +302,10 @@
     var alRows = al.length ? al.slice() : [c.allergie_grave === false ? "Aucune allergie grave déclarée" : "Non renseigné"];
     if (c.allergie_reaction) alRows.push("Réaction : " + esc(c.allergie_reaction));
     if (c.stylo_adrenaline) alRows.push("<strong>Porte un stylo d’adrénaline</strong>");
-    h += '<div class="group">' + groupHead("Allergies", "red") + '<div class="list">' + rows(alRows) + "</div></div>";
+    h += '<div class="group">' + groupHead("Allergies", "accent") + '<div class="list">' + rows(alRows) + "</div></div>";
     var pa = arr(c.pathologies).map(esc);
     if (c.pathologie_details) pa.push(esc(c.pathologie_details));
-    h += '<div class="group">' + groupHead("Pathologies", "amber") + '<div class="list">' + rows(pa.length ? pa : ["Aucune déclarée"]) + "</div></div>";
+    h += '<div class="group">' + groupHead("Pathologies", "accent") + '<div class="list">' + rows(pa.length ? pa : ["Aucune déclarée"]) + "</div></div>";
     var tr = arr(c.traitements).filter(function (t) { return t && t.nom; }).map(function (t) { return esc(t.nom) + (t.dosage || t.frequence ? " – " + esc([t.dosage, t.frequence].filter(Boolean).join(", ")) : ""); });
     if (arr(c.traitements_prioritaires).length) tr.push("<strong>À signaler : " + esc(arr(c.traitements_prioritaires).join(", ")) + "</strong>");
     h += '<div class="group">' + groupHead("Traitements en cours") + '<div class="list">' + rows(tr.length ? tr : ["Aucun déclaré"]) + "</div></div>";
@@ -350,6 +350,7 @@
     else if (s === "pendingcard") h = vMessage("Fiche en préparation", "Ce manchon est activé mais sa fiche d’urgence n’est pas encore publiée.", S.user ? '<button class="btn primary" data-act="dash">Mes fiches</button>' : "");
     else h = vMessage("Connexion impossible", "Impossible de charger la page. Vérifiez la connexion internet puis réessayez.", '<button class="btn primary" data-act="reload">Réessayer</button>');
     app.innerHTML = h;
+    if (typeof helpSync === "function") helpSync();
   }
 
   // ---------------- Data ----------------
@@ -611,6 +612,195 @@
   app.addEventListener("keydown", function (e) {
     if (e.key === "Enter" && S.screen === "auth" && e.target.tagName === "INPUT") { var b = app.querySelector('[data-act="signup"],[data-act="login"]'); if (b) b.click(); }
   });
+
+  // ---------------- Assistant d’aide (support) ----------------
+  // Réponses fixes, rédigées à l’avance : le robot ne répond qu’avec ces textes.
+  // Si la question n’est pas reconnue, il propose d’envoyer la demande au support
+  // (table support_requests, via la fonction create_support_request).
+  var SUJETS = ["Activation du manchon", "Manchon perdu ou volé", "Ma fiche d’urgence", "Mon compte et connexion", "Autre demande"];
+  var FAQ = [
+    { id: "activer", q: "Comment activer mon manchon ?", sujet: 0, k: ["activ", "associ", "scann", "qr", "lier", "relier", "nouveau manchon"],
+      a: "Scannez le QR code du manchon avec l’appareil photo de votre téléphone. Créez un compte ou connectez-vous, choisissez la fiche à relier (ou créez-en une), puis publiez-la. Le manchon est alors activé et son code s’affiche à l’écran." },
+    { id: "perdu", q: "J’ai perdu mon manchon", sujet: 1, k: ["perdu", "perte", "vol", "egare", "suspend", "retrouv", "desactiv"],
+      a: "Connectez-vous, ouvrez <strong>Mes fiches</strong> et appuyez sur <strong>Suspendre</strong> à côté du manchon. Plus personne ne verra votre fiche en le scannant. Si vous le retrouvez, appuyez sur <strong>Réactiver</strong>." },
+    { id: "modifier", q: "Comment modifier ma fiche ?", sujet: 2, k: ["modif", "chang", "mettre a jour", "mise a jour", "corrig", "edit", "ajout", "supprim"],
+      a: "Dans <strong>Mes fiches</strong>, appuyez sur <strong>Modifier la fiche</strong>. Parcourez les étapes puis appuyez sur <strong>Publier ma fiche</strong> à la fin : les changements sont visibles immédiatement lors d’un scan." },
+    { id: "mdp", q: "Mot de passe oublié", sujet: 3, k: ["mot de passe", "mdp", "password", "oubli", "connect", "identifi", "login"],
+      a: "Sur l’écran <strong>Se connecter</strong>, saisissez votre e-mail puis appuyez sur <strong>Mot de passe oublié ?</strong>. Vous recevrez un lien pour choisir un nouveau mot de passe. Pensez à regarder dans vos courriers indésirables." },
+    { id: "visible", q: "Qui peut voir ma fiche ?", sujet: 2, k: ["qui peut", "qui voit", "visible", "voir ma fiche", "confidenti", "donnees", "rgpd", "prive", "securi", "public"],
+      a: "Toute personne qui scanne votre manchon actif voit votre fiche d’urgence : nom public, contact d’urgence, allergies, pathologies, traitements et les fichiers que vous avez rendus visibles. Votre nom complet, votre e-mail et votre téléphone personnel ne sont jamais affichés." },
+    { id: "proche", q: "Créer une fiche pour un proche", sujet: 2, k: ["enfant", "proche", "famille", "parent", "plusieurs", "autre personne", "deuxieme", "second"],
+      a: "Dans <strong>Mes fiches</strong>, appuyez sur <strong>Ajouter une fiche</strong>. Vous pouvez gérer plusieurs fiches avec un seul compte, et chaque fiche peut être reliée à son propre manchon." },
+    { id: "email", q: "Je n’ai pas reçu l’e-mail", sujet: 3, k: ["e mail", "email", "mail", "confirmation", "pas recu", "lien"],
+      a: "L’e-mail peut mettre quelques minutes à arriver. Vérifiez vos courriers indésirables (spams). Si vous ne le recevez toujours pas, contactez le support : nous vérifierons votre compte." }
+  ];
+  var URGENCE = ["urgence", "malaise", "accident", "inconscient", "blesse", "saign", "respire", "112", "samu", "pompier"];
+  var H = { open: false, view: "chat", msgs: [], sending: false, draft: null, lastAsk: "" };
+  var helpEl = $("help");
+  I.help = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12z"/><path d="M9.6 9.6a2.5 2.5 0 0 1 4.8.9c0 1.6-2.4 2-2.4 3.3M12 16.6h.01"/></svg>';
+  I.send = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+
+  function norm(t) { return String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[’'\-]/g, " ").replace(/\s+/g, " "); }
+  function matchFaq(text) {
+    var t = " " + norm(text) + " ";
+    var u = t.replace(/(fiche|contact|numero|carte) d urgence/g, " ");
+    if (URGENCE.some(function (k) { return u.indexOf(k) >= 0; })) return "urgence";
+    var best = null, score = 0;
+    FAQ.forEach(function (f) {
+      var s = f.k.reduce(function (n, k) { return n + (t.indexOf(k) >= 0 ? 1 : 0); }, 0);
+      if (s > score) { score = s; best = f; }
+    });
+    return best;
+  }
+  function faqById(id) { return FAQ.filter(function (f) { return f.id === id; })[0]; }
+  function menuMsg(text) { return { from: "bot", html: text, menu: true }; }
+  function answer(f) {
+    if (f === "urgence") {
+      H.msgs.push({ from: "bot", html: "Je ne peux pas vous aider pour une urgence médicale. <strong>Appelez immédiatement le 112</strong> (numéro d’urgence européen).", chips: [{ label: "Appeler le 112", href: "tel:112" }, { label: "Autres questions", act: "menu" }] });
+      return;
+    }
+    H.sujet = f.sujet;
+    H.msgs.push({ from: "bot", html: f.a, chips: [{ label: "Autres questions", act: "menu" }, { label: "Contacter le support", act: "contact" }] });
+  }
+  function ask(text) {
+    text = String(text || "").trim(); if (!text) return;
+    H.msgs.push({ from: "me", html: esc(text) });
+    var f = matchFaq(text);
+    if (f) answer(f);
+    else {
+      H.lastAsk = text; H.sujet = 4;
+      H.msgs.push({ from: "bot", html: "Je n’ai pas de réponse toute prête à cette question. Je peux la transmettre au support : une personne vous répondra par e-mail.", chips: [{ label: "Envoyer au support", act: "contact", prefill: true }, { label: "Autres questions", act: "menu" }] });
+    }
+    renderHelp();
+  }
+  function sleeveChoices() {
+    var out = [];
+    function add(l) { if (l && out.indexOf(l) < 0) out.push(l); }
+    var p = getPending(); if (p) add(p.label);
+    if (S.scan && S.scan.label) add(S.scan.label);
+    (S.sleeves || []).forEach(function (s) { add(s.label); });
+    return out;
+  }
+  function readHelpForm() {
+    if (!H.draft) return;
+    var e = $("h-email"), s = $("h-sujet"), sl = $("h-sleeve"), m = $("h-msg");
+    if (e) H.draft.email = e.value.trim();
+    if (s) H.draft.sujet = +s.value;
+    if (sl) H.draft.sleeve = sl.value.trim();
+    if (m) H.draft.msg = m.value;
+  }
+  function helpVisible() { return ["loading", "public", "preview"].indexOf(S.screen) < 0; }
+  function chatView() {
+    var h = '<div class="help-body" id="help-body"><p class="help-note">En cas d’urgence médicale, appelez le <a href="tel:112">112</a>.</p>';
+    H.msgs.forEach(function (m, i) {
+      var last = i === H.msgs.length - 1;
+      h += '<div class="hmsg ' + (m.from === "me" ? "me" : "bot") + '">' + m.html + "</div>";
+      if (last && m.menu) {
+        h += '<div class="list hmenu">' + FAQ.map(function (f) { return '<button class="cell tap" data-hact="faq" data-id="' + f.id + '"><span style="flex:1">' + esc(f.q) + "</span>" + I.chevR + "</button>"; }).join("") +
+          '<button class="cell tap" data-hact="contact"><span style="flex:1;color:var(--tint);font-weight:600">Contacter le support</span>' + I.chevR + "</button></div>";
+      }
+      if (last && m.chips) {
+        h += '<div class="hchips">' + m.chips.map(function (c) {
+          return c.href ? '<a class="hchip" href="' + esc(c.href) + '">' + esc(c.label) + "</a>" : '<button class="hchip" data-hact="' + c.act + '"' + (c.prefill ? ' data-prefill="1"' : "") + ">" + esc(c.label) + "</button>";
+        }).join("") + "</div>";
+      }
+    });
+    h += "</div>";
+    h += '<form class="help-compose" id="help-compose"><input id="help-q" type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Écrivez votre question" aria-label="Votre question"><button class="help-send" type="submit" aria-label="Envoyer">' + I.send + "</button></form>";
+    return h;
+  }
+  function formView() {
+    var d = H.draft, ch = sleeveChoices();
+    var h = '<div class="help-body"><div class="stack" style="padding-top:4px">' +
+      '<p class="sub" style="margin:0 4px">Décrivez votre demande. Le support PassVital vous répondra par e-mail.</p><div class="group"><div class="list">';
+    if (S.user) h += '<div class="cell"><span>E-mail</span><span class="val muted">' + esc(S.user.email) + "</span></div>";
+    else h += '<label class="cell" for="h-email"><span>E-mail</span><input id="h-email" type="email" autocomplete="email" placeholder="nom@exemple.fr" value="' + esc(d.email) + '"></label>';
+    h += '<label class="cell sel" for="h-sujet"><span>Sujet</span><select id="h-sujet">' + SUJETS.map(function (s, i) { return '<option value="' + i + '"' + (i === d.sujet ? " selected" : "") + ">" + esc(s) + "</option>"; }).join("") + "</select></label>";
+    if (ch.length) {
+      h += '<label class="cell sel" for="h-sleeve"><span>Manchon</span><select id="h-sleeve" class="mono"><option value="">Aucun</option>' + ch.map(function (l) { return '<option value="' + esc(l) + '"' + (l === d.sleeve ? " selected" : "") + ">" + esc(l) + "</option>"; }).join("") + "</select></label>";
+    } else {
+      h += '<label class="cell" for="h-sleeve"><span>Manchon</span><input id="h-sleeve" type="text" maxlength="20" autocapitalize="characters" placeholder="PV-XXXX-XXX (facultatif)" value="' + esc(d.sleeve) + '"></label>';
+    }
+    h += '</div><p class="cap">' + (S.user ? "Votre e-mail et le code du manchon sont ajoutés automatiquement à la demande." : "Le code est imprimé sur votre manchon, sous le QR code.") + "</p></div>" +
+      '<div class="group">' + groupHead("Votre message") + '<div class="list"><label class="cell" for="h-msg"><textarea id="h-msg" maxlength="1000" placeholder="Ex. Mon manchon ne s’active pas après le scan…">' + esc(d.msg) + '</textarea></label></div><p class="cap" id="h-cnt">' + (d.msg || "").length + " / 1000 caractères</p></div>" +
+      '<p class="err" id="h-err" role="alert"></p><p class="cap">N’indiquez pas d’informations médicales dans ce message. En cas d’urgence, appelez le 112.</p></div></div>' +
+      '<div class="help-foot"><button class="btn primary" data-hact="send"' + (H.sending ? " disabled" : "") + ">" + (H.sending ? "Envoi…" : "Envoyer au support") + "</button></div>";
+    return h;
+  }
+  function renderHelp() {
+    var vis = helpVisible();
+    if (!vis) H.open = false;
+    if (H.view === "form") readHelpForm();
+    var h = "";
+    if (vis && !H.open) h = '<button class="help-fab" id="help-fab" data-hact="open" aria-haspopup="dialog">' + I.help + "<span>Besoin d’aide ?</span></button>";
+    if (H.open) {
+      var form = H.view === "form";
+      h = '<div class="help-scrim" data-hact="close"></div><section class="help-sheet" role="dialog" aria-modal="true" aria-labelledby="help-title"><div class="grab" aria-hidden="true"></div><header class="help-head">' +
+        (form ? '<button class="back" data-hact="to-chat">' + I.chev + "Assistant</button>" : '<div class="help-id">' + logo("var(--tint)", 32) + '<div><strong id="help-title">Assistant PassVital</strong><small>Répond tout de suite · support sur demande</small></div></div>') +
+        (form ? '<strong id="help-title" class="help-title">Contacter le support</strong>' : "") +
+        '<button class="linkbtn" data-hact="close">Fermer</button></header>' + (form ? formView() : chatView()) + "</section>";
+    }
+    helpEl.innerHTML = h;
+    document.body.classList.toggle("help-lock", H.open);
+    var b = $("help-body"); if (b && !form) b.scrollTop = b.scrollHeight;
+  }
+  function hErr(msg) { var e = $("h-err"); if (e) { e.textContent = msg; e.scrollIntoView({ block: "center", behavior: "smooth" }); } else toast(msg); }
+  function openHelp() {
+    H.open = true; H.view = "chat";
+    if (!H.msgs.length) H.msgs.push(menuMsg("Bonjour, je suis l’assistant PassVital. Choisissez une question ou écrivez la vôtre ci-dessous."));
+    renderHelp();
+    if (window.matchMedia && matchMedia("(pointer: fine)").matches) { var q = $("help-q"); if (q) q.focus(); }
+  }
+  function closeHelp() { H.open = false; renderHelp(); var f = $("help-fab"); if (f) f.focus(); }
+  function openForm(prefill) {
+    var ch = sleeveChoices();
+    H.draft = { email: (S.user && S.user.email) || S.form.email || "", sujet: H.sujet == null ? 4 : H.sujet, sleeve: ch[0] || "", msg: prefill && H.lastAsk ? H.lastAsk : "" };
+    H.view = "form"; renderHelp();
+  }
+  async function sendSupport() {
+    readHelpForm();
+    var d = H.draft, email = S.user ? S.user.email : d.email;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) return hErr("Saisissez une adresse e-mail valide pour recevoir la réponse.");
+    if ((d.msg || "").trim().length < 10) return hErr("Décrivez votre demande en quelques mots (10 caractères minimum).");
+    var last = 0; try { last = +localStorage.getItem("pv-help-last") || 0; } catch (x) {}
+    if (Date.now() - last < 60000) return hErr("Une demande vient d’être envoyée. Patientez une minute avant d’en envoyer une autre.");
+    H.sending = true; renderHelp();
+    var r = await sb.rpc("create_support_request", { p_email: email, p_sujet: SUJETS[d.sujet] || SUJETS[4], p_sleeve: d.sleeve || null, p_message: d.msg.trim(), p_page: S.screen });
+    H.sending = false;
+    if (r.error) {
+      renderHelp();
+      var m = (r.error.message || "") + " " + (r.error.code || "");
+      return hErr(/too_many/.test(m) ? "Trop de demandes envoyées. Réessayez dans quelques minutes."
+        : /invalid_email/.test(m) ? "Saisissez une adresse e-mail valide."
+        : /PGRST202|Could not find the function|does not exist/i.test(m) ? "Le support n’est pas encore configuré. Réessayez plus tard."
+        : errText(r.error));
+    }
+    try { localStorage.setItem("pv-help-last", String(Date.now())); } catch (x) {}
+    H.msgs.push({ from: "me", html: "Demande envoyée : " + esc(SUJETS[d.sujet]) });
+    H.msgs.push({ from: "bot", html: "Merci ! Votre demande <strong class=\"mono\">" + esc(r.data) + "</strong> a bien été transmise au support. Vous recevrez une réponse par e-mail à <strong>" + esc(email) + "</strong>.", chips: [{ label: "Autres questions", act: "menu" }, { label: "Fermer", act: "close" }] });
+    H.draft = null; H.lastAsk = ""; H.view = "chat"; renderHelp();
+  }
+  var hActions = {
+    open: openHelp, close: closeHelp,
+    menu: function () { H.msgs.push(menuMsg("Voici les questions les plus fréquentes :")); renderHelp(); },
+    faq: function (b) { var f = faqById(b.getAttribute("data-id")); if (!f) return; H.msgs.push({ from: "me", html: esc(f.q) }); answer(f); renderHelp(); },
+    contact: function (b) { openForm(b.getAttribute("data-prefill") === "1"); },
+    "to-chat": function () { readHelpForm(); H.view = "chat"; renderHelp(); },
+    send: function () { return sendSupport(); }
+  };
+  helpEl.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-hact]"); if (!b || b.disabled) return;
+    e.preventDefault();
+    Promise.resolve(hActions[b.getAttribute("data-hact")](b)).catch(function (err) { H.sending = false; renderHelp(); hErr(errText(err)); });
+  });
+  helpEl.addEventListener("submit", function (e) {
+    if (e.target.id !== "help-compose") return;
+    e.preventDefault(); var q = $("help-q"); var v = q.value; q.value = ""; ask(v);
+    if (window.matchMedia && matchMedia("(pointer: fine)").matches) { var q2 = $("help-q"); if (q2) q2.focus(); }
+  });
+  helpEl.addEventListener("input", function (e) { if (e.target.id === "h-msg") { var c = $("h-cnt"); if (c) c.textContent = e.target.value.length + " / 1000 caractères"; } });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && H.open) closeHelp(); });
+  function helpSync() { if (!H.open || !helpVisible()) renderHelp(); }
 
   // ---------------- Boot ----------------
   async function boot() {
