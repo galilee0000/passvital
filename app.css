@@ -86,7 +86,7 @@ h2{font-size:20px;font-weight:700;margin:0}
 .btn:focus-visible,.back:focus-visible,.linkbtn:focus-visible,.cell.tap:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
 .urg{display:flex;align-items:center;gap:10px;padding:10px 0}
 .urg strong{color:var(--tint);font-weight:600;flex:1}
-.urg span{color:var(--muted);font-size:15px}
+.urg > span{color:var(--muted);font-size:15px}
 .who{display:flex;align-items:center;gap:16px}
 .who .avatar{width:72px;height:72px;font-size:28px}
 .who h1{font-size:28px}
@@ -167,3 +167,11 @@ body.help-lock{overflow:hidden}
 .help-sheet .cell select.mono{font-family:var(--mono)}
 @media (prefers-reduced-motion: reduce){.help-sheet,.help-scrim{animation:none!important}}
 @media (max-width:359px){.help-title{display:none}}
+/* ---------- Sélecteur de langue ---------- */
+.navr{display:flex;align-items:center;gap:10px;min-width:0}
+.langsel{position:relative;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 10px;border-radius:16px;background:rgba(118,118,128,.12);color:var(--fg);font-size:13px;font-weight:600;letter-spacing:.02em;flex:none;cursor:pointer}
+.langsel svg{color:var(--muted)}
+.langsel select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px;border:0;appearance:none;-webkit-appearance:none}
+.langsel:focus-within{outline:2px solid var(--tint);outline-offset:2px}
+.urg .langsel{margin-left:auto}
+.cell .mono{white-space:nowrap}

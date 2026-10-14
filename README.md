@@ -10,6 +10,12 @@ Design : fichier Figma « PassVital – Medical Profile » (option A, bleu médi
 4. Toute autre personne qui scanne le QR code voit directement la fiche d’urgence (sans code).
 5. Depuis « Mes fiches » : plusieurs fiches par compte, modification, aperçu, suspension d’un manchon perdu.
 
+## Langues
+Français, anglais, espagnol, allemand (fichier `i18n.js`).
+- La langue du téléphone est détectée automatiquement ; sélecteur 🌐 en haut de chaque écran.
+- Lien direct dans une langue : ajouter `&lang=en`, `&lang=es` ou `&lang=de` (ex. `?m=huq3yphe4pw4&lang=de`).
+- Les réponses sont enregistrées en français dans la base et affichées traduites sur la fiche d’urgence.
+
 ## Fichiers
 - `index.html`, `app.css`, `app.js` : l’application (GitHub Pages).
 - `supabase.sql` : base de données (à exécuter une fois dans Supabase › SQL Editor).
