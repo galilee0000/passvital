@@ -57,7 +57,7 @@
     ["Vérification", "Voici ce que verra une personne qui scanne votre QR code."]
   ];
   var COLS = ["prenom", "nom", "nom_public", "photo_path", "telephone", "adresse", "code_postal", "ville", "show_adresse",
-    "contact_nom", "contact_lien", "contact_tel", "allergie_grave", "allergies", "allergie_reaction", "stylo_adrenaline",
+    "contact_nom", "contact_lien", "contact_tel", "contact_email", "alerte_scan", "allergie_grave", "allergies", "allergie_reaction", "stylo_adrenaline",
     "allergie_autre", "pathologies", "pathologie_details", "traitements", "traitements_prioritaires", "groupe_sanguin", "langues", "infos"];
 
   var app = document.getElementById("app");
@@ -86,6 +86,7 @@
     play: '<svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="rgba(0,0,0,.55)"/><path d="m10 8 6 4-6 4z" fill="#fff"/></svg>',
     trash: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>',
     plus: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="11" fill="var(--ok)"/><path d="M11 6v10M6 11h10" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    pin: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
     globe: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.8 3.9 6 3.9 9.5s-1.3 6.7-3.9 9.5c-2.6-2.8-3.9-6-3.9-9.5s1.3-6.7 3.9-9.5z"/></svg>'
   };
   function initials(p, n) { return ((p || "").trim().charAt(0) + (n || "").trim().charAt(0)).toUpperCase() || "?"; }
@@ -243,7 +244,8 @@
         '</div><p class="cap">' + esc(t("Votre téléphone personnel n’est jamais affiché. L’adresse ne l’est que si vous l’autorisez.")) + "</p></div>" +
         '<div class="group">' + groupHead("Nom affiché sur la fiche") + '<div class="list">' + inputCell("Nom public", "nom_public", P.nom_public || autoPublic(P), "text", "Prénom + initiale") + '</div><p class="cap">' + esc(t("Proposé automatiquement : prénom et initiale du nom. Votre nom complet n’est jamais affiché.")) + "</p></div>";
     } else if (st === 2) {
-      h += '<div class="group">' + groupHead("Contact") + '<div class="list">' + inputCell("Nom", "contact_nom", P.contact_nom, "text", "Obligatoire") + inputCell("Téléphone", "contact_tel", P.contact_tel, "tel", "Obligatoire") + "</div></div>" +
+      h += '<div class="group">' + groupHead("Contact") + '<div class="list">' + inputCell("Nom", "contact_nom", P.contact_nom, "text", "Obligatoire") + inputCell("Téléphone", "contact_tel", P.contact_tel, "tel", "Obligatoire") + inputCell("E-mail", "contact_email", P.contact_email, "email", "nom@exemple.fr", ' autocomplete="off" inputmode="email"') + "</div></div>" +
+        '<div class="group">' + groupHead("Alerte en cas de scan") + '<div class="list">' + switchCell("Prévenir ce contact par e-mail quand mon manchon est scanné", "alerte_scan", P.alerte_scan !== false) + '</div><p class="cap">' + esc(t("Quand une autre personne scanne votre manchon, votre contact reçoit un e-mail avec l’heure du scan et, si cette personne l’accepte, sa position.")) + "</p></div>" +
         '<div class="group">' + groupHead("Lien avec vous") + '<div class="list">' + radioRows("contact_lien", LIENS, P.contact_lien || "") + '</div><p class="cap">' + esc(t("Ce numéro pourra être appelé en un geste depuis votre fiche d’urgence.")) + "</p></div>";
     } else if (st === 3) {
       var al = arr(P.allergies);
@@ -319,6 +321,7 @@
     if (mode === "preview") h += '<header class="nav"><button class="back" data-act="close-preview">' + I.chev + esc(t("Retour")) + '</button><span class="step">' + esc(t("Aperçu")) + "</span></header>";
     h += '<header class="urg">' + logo("var(--tint)", 28) + "<strong>" + esc(t("Fiche d’urgence")) + "</strong>" + langPicker() + "</header>" +
       '<div class="stack" style="padding-top:8px"><div class="who">' + avatarHtml(c.photo_path, c.initiales) + "<div><h1>" + esc(c.nom_public || "") + '</h1><p class="sub" style="font-size:13px;margin-top:2px">' + esc(t("Informations déclarées par le titulaire")) + "</p></div></div>";
+    if (mode === "public" && S.alert) h += '<div class="scan-alert" id="scan-alert" role="status" aria-live="polite">' + alertHtml() + "</div>";
     var tel = c.contact_tel ? String(c.contact_tel).replace(/[^+\d]/g, "") : "";
     if (c.contact_tel) {
       h += '<div class="group"><a class="btn call" href="tel:' + esc(tel) + '">' + I.phone + esc(c.contact_nom ? t("Appeler {name}", { name: c.contact_nom }) : t("Appeler le contact d’urgence")) + "</a>" +
@@ -359,6 +362,59 @@
   }
   function vMessage(title, text, actions) { return navBrand("") + '<div class="stack"><div><h1>' + esc(t(title)) + '</h1><p class="sub">' + esc(t(text)) + "</p></div></div>" + (actions ? bar(actions) : ""); }
 
+  // ---------------- Alerte au contact d’urgence lors d’un scan ----------------
+  // Le téléphone du titulaire (connecté, ou ayant déjà géré ce manchon) ne déclenche pas d’alerte.
+  function ownList() { try { return JSON.parse(localStorage.getItem("pv-own") || "[]"); } catch (e) { return []; } }
+  function rememberOwn(ids) { try { var l = ownList(); ids.forEach(function (i) { if (i && l.indexOf(i) < 0) l.push(i); }); localStorage.setItem("pv-own", JSON.stringify(l.slice(-50))); } catch (e) {} }
+  function isOwnDevice(id) { return ownList().indexOf(id) >= 0; }
+  function hhmm(d) { return d.toLocaleTimeString(LOCALES[LANG], { hour: "2-digit", minute: "2-digit" }); }
+  function alertHtml() {
+    var a = S.alert || {}, ic = '<span class="sa-ic" aria-hidden="true">' + (a.state === "sent" || a.state === "recent" || a.state === "located" ? "✓" : a.state === "error" ? "!" : I.pin) + "</span>";
+    var name = (S.scan && S.scan.card && S.scan.card.nom_public) || "";
+    var txt = a.state === "sent" ? (a.withLoc ? t("Contact d’urgence prévenu à {time}, avec votre position.", { time: a.time }) : t("Contact d’urgence prévenu à {time} (position non partagée).", { time: a.time }))
+      : a.state === "located" ? t("Votre position a aussi été envoyée au contact d’urgence.")
+      : a.state === "recent" ? t("Le contact d’urgence a déjà été prévenu il y a quelques minutes.")
+      : a.state === "error" ? t("Le contact d’urgence n’a pas pu être prévenu automatiquement. Appelez-le avec le bouton ci-dessous.")
+      : t("Le contact d’urgence de {name} est prévenu de ce scan. Autorisez la localisation pour lui indiquer où vous êtes.", { name: name });
+    return ic + "<p>" + esc(txt) + "</p>";
+  }
+  function paintAlert() { var el = $("scan-alert"); if (el) { el.className = "scan-alert " + (S.alert ? S.alert.state : ""); el.innerHTML = alertHtml(); } }
+  function postAlert(pos, keepalive) {
+    var body = { sleeve: scanId };
+    if (pos) { body.lat = pos.lat; body.lng = pos.lng; body.accuracy = pos.accuracy; }
+    return fetch(SUPABASE_URL + "/functions/v1/scan-alert", {
+      method: "POST", keepalive: !!keepalive,
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { j.ok = r.ok; return j; }); });
+  }
+  function startScanAlert() {
+    var sent = false, sentWithoutLoc = false, timer;
+    function done(res, withLoc) {
+      if (!S.alert) return;
+      if (res && res.status === "sent") S.alert = { state: "sent", withLoc: withLoc, time: hhmm(new Date()) };
+      else if (res && res.status === "recent") S.alert = { state: "recent" };
+      else if (res && res.status === "logged") S.alert = null;
+      else S.alert = { state: "error" };
+      if (S.alert) paintAlert(); else { var el = $("scan-alert"); if (el) el.remove(); }
+    }
+    function send(pos, keepalive) {
+      if (sent) return; sent = true; clearTimeout(timer); sentWithoutLoc = !pos;
+      postAlert(pos, keepalive).then(function (j) { done(j, !!pos); }, function () { done(null); });
+    }
+    timer = setTimeout(function () { send(null); }, 8000); // sans réponse de localisation : on prévient quand même
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") send(null, true); });
+    if (!navigator.geolocation) return send(null);
+    navigator.geolocation.getCurrentPosition(function (p) {
+      var pos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: Math.round(p.coords.accuracy) };
+      if (!sent) return send(pos);
+      if (sentWithoutLoc) { // position arrivée après l’alerte : on l’envoie en complément
+        sentWithoutLoc = false;
+        postAlert(pos).then(function (j) { if (j && j.status === "sent" && S.alert) { S.alert = { state: "located" }; paintAlert(); } }, function () {});
+      }
+    }, function () { send(null); }, { enableHighAccuracy: true, timeout: 20000, maximumAge: 60000 });
+  }
+
   // ---------------- Render ----------------
   function render() {
     var s = S.screen, h;
@@ -396,6 +452,7 @@
     ]);
     r.forEach(function (x) { if (x.error) throw x.error; });
     S.profiles = r[0].data; S.sleeves = r[1].data; S.allMedia = r[2].data;
+    rememberOwn(S.sleeves.map(function (x) { return x.id; }));
   }
   async function ensureCgu() {
     var flag = null; try { flag = localStorage.getItem("pv-cgu"); } catch (e) {}
@@ -411,7 +468,11 @@
     if (st === "active") {
       S.isOwner = false;
       if (S.user) { var o = await sb.from("sleeves").select("id").eq("id", scanId).maybeSingle(); S.isOwner = !!o.data; }
-      return go("public");
+      if (S.isOwner) rememberOwn([scanId]);
+      S.alert = (!S.isOwner && !isOwnDevice(scanId) && S.scan.card && S.scan.card.alerte === true) ? { state: "locating" } : null;
+      go("public");
+      if (S.alert) startScanAlert();
+      return;
     }
     if (st === "available") {
       setPending({ id: scanId, label: S.scan.label });
@@ -467,8 +528,14 @@
     COLS.forEach(function (c) { if (S.P[c] !== undefined) patch[c] = S.P[c]; });
     if (!patch.nom_public) patch.nom_public = autoPublic(S.P) || null;
     patch.traitements = arr(S.P.traitements).filter(function (x) { return x && (x.nom || x.dosage || x.frequence); });
+    patch.alert_lang = LANG;
     Object.assign(patch, extra || {});
     var r = await sb.from("profiles").update(patch).eq("id", S.P.id).select().single();
+    if (r.error && /contact_email|alerte_scan|alert_lang|PGRST204/.test((r.error.message || "") + (r.error.code || ""))) {
+      // Base pas encore mise à jour (supabase-scan-alert.sql) : on enregistre le reste.
+      delete patch.contact_email; delete patch.alerte_scan; delete patch.alert_lang;
+      r = await sb.from("profiles").update(patch).eq("id", S.P.id).select().single();
+    }
     if (r.error) throw r.error;
     S.P = r.data;
   }
@@ -476,6 +543,8 @@
     var P = S.P;
     if (st === 1 && (!P.prenom || !P.nom)) return t("Renseignez le prénom et le nom.");
     if (st === 2 && (!P.contact_nom || !P.contact_tel || P.contact_tel.replace(/\D/g, "").length < 6)) return t("Renseignez le nom et un numéro de téléphone valide pour le contact d’urgence.");
+    if (st === 2 && P.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(P.contact_email)) return t("Saisissez une adresse e-mail valide pour le contact d’urgence.");
+    if (st === 2 && P.alerte_scan !== false && !P.contact_email) return t("Ajoutez l’e-mail du contact pour qu’il soit prévenu en cas de scan, ou désactivez l’alerte.");
     if (st === 7 && !S.consent) return t("Activez l’interrupteur de consentement pour publier la fiche.");
     return null;
   }
@@ -491,7 +560,7 @@
       if (p) {
         var r = await sb.rpc("activate_sleeve", { p_id: p.id, p_profile: S.P.id });
         if (r.error) throw r.error;
-        setPending(null);
+        setPending(null); rememberOwn([p.id]);
         S.activated = { id: p.id, label: r.data || p.label, name: S.P.nom_public || S.P.prenom };
         S.busy = false; return go("activated");
       }
@@ -608,7 +677,7 @@
         var r = await sb.rpc("activate_sleeve", { p_id: p.id, p_profile: prof.id });
         S.busy = false;
         if (r.error) { render(); return showErr(errText(r.error)); }
-        setPending(null); S.activated = { id: p.id, label: r.data || p.label, name: prof.nom_public || prof.prenom }; return go("activated");
+        setPending(null); rememberOwn([p.id]); S.activated = { id: p.id, label: r.data || p.label, name: prof.nom_public || prof.prenom }; return go("activated");
       }
       editProfile(S.choice);
     },

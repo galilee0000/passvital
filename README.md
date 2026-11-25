@@ -28,3 +28,18 @@ Français, anglais, espagnol, allemand (fichier `i18n.js`).
 - `consent_log` : preuves de consentement (CGU et publication).
 - Vue `admin_overview` : tout en une seule table, avec l’e-mail du compte.
 - `support_requests` : demandes au support (n° S-XXXXXX, e-mail, sujet, manchon, message). Colonne `status` : `nouveau`, `en_cours`, `resolu` ; `note_interne` pour vos notes.
+
+
+## Alerte au contact d’urgence lors d’un scan
+Quand une autre personne que le titulaire scanne un manchon, le contact d’urgence reçoit un e-mail :
+heure du scan, position (si la personne qui scanne l’autorise), adresse approximative, lien Google Maps.
+Au plus 1 alerte par manchon toutes les 10 minutes (+ 1 e-mail de position si elle arrive après).
+Le téléphone du titulaire (connecté ou ayant déjà géré ce manchon) ne déclenche pas d’alerte.
+
+Mise en place (une seule fois) :
+1. Supabase › SQL Editor : exécuter `supabase-scan-alert.sql`.
+2. Créer un compte sur https://resend.com, vérifier un domaine (ex. pshconsultingcom.com) et créer une clé API.
+3. Supabase › Edge Functions › Deploy a new function › nom `scan-alert` › coller `supabase/functions/scan-alert/index.ts`.
+   Dans les réglages de la fonction : désactiver « Verify JWT ».
+4. Supabase › Edge Functions › Secrets : `RESEND_API_KEY` (clé Resend) et `ALERT_FROM` (ex. `PassVital <alertes@pshconsultingcom.com>`).
+Journal des scans : Table Editor › `scan_events`.

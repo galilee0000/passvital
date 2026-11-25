@@ -175,3 +175,13 @@ body.help-lock{overflow:hidden}
 .langsel:focus-within{outline:2px solid var(--tint);outline-offset:2px}
 .urg .langsel{margin-left:auto}
 .cell .mono{white-space:nowrap}
+/* ---------- Alerte de scan (fiche publique) ---------- */
+.scan-alert{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;background:rgba(11,92,173,.08);color:var(--fg);font-size:14px;line-height:1.4}
+.scan-alert p{margin:0}
+.scan-alert .sa-ic{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:#fff;font-size:13px;font-weight:700;margin-top:-1px}
+.scan-alert .sa-ic svg{width:13px;height:13px}
+.scan-alert.locating .sa-ic{animation:sapulse 1.6s ease-in-out infinite}
+.scan-alert.error{background:rgba(215,0,21,.08)}
+.scan-alert.error .sa-ic{background:var(--urgent)}
+@keyframes sapulse{50%{opacity:.45}}
+@media (prefers-reduced-motion: reduce){.scan-alert.locating .sa-ic{animation:none}}
